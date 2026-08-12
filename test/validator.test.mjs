@@ -49,3 +49,55 @@ test("catches unknown calendar references", () => {
   const r = validateSdef(badLines.join("\r\n"));
   assert.ok(r.diagnostics.some((d) => d.code === "UNKNOWN_ACTIVITY_CALENDAR"));
 });
+
+test("requires precedence records when project uses precedence diagramming", () => {
+  const badLines = lines.filter((_, i) => i !== 5); // remove the only PRED record
+  const r = validateSdef(badLines.join("\r\n"));
+  assert.ok(r.diagnostics.some((d) => d.code === "NO_PRECEDENCE_RECORDS" && d.severity === "error"));
+});
+
+test("rejects changed remaining duration on an unstarted activity", () => {
+  const badLines = [...lines];
+  const chars = badLines[7].padEnd(132, " ").split("");
+  put(chars, 33, 35, "4", "right");
+  badLines[7] = chars.join("").trimEnd();
+  const r = validateSdef(badLines.join("\r\n"));
+  assert.ok(r.diagnostics.some((d) => d.code === "UNSTARTED_REMAINING" && d.severity === "error"));
+});
+
+test("requires total float on unfinished activities", () => {
+  const badLines = [...lines];
+  const chars = badLines[7].padEnd(132, " ").split("");
+  put(chars, 108, 108, " ");
+  put(chars, 110, 112, "   ");
+  badLines[7] = chars.join("").trimEnd();
+  const r = validateSdef(badLines.join("\r\n"));
+  assert.ok(r.diagnostics.some((d) => d.code === "MISSING_TOTAL_FLOAT" && d.severity === "error"));
+});
+
+test("requires float sign for nonzero total float", () => {
+  const badLines = [...lines];
+  const chars = badLines[7].padEnd(132, " ").split("");
+  put(chars, 108, 108, " ");
+  badLines[7] = chars.join("").trimEnd();
+  const r = validateSdef(badLines.join("\r\n"));
+  assert.ok(r.diagnostics.some((d) => d.code === "MISSING_FLOAT_SIGN" && d.severity === "error"));
+});
+
+test("requires blank float sign when total float is zero", () => {
+  const badLines = [...lines];
+  const chars = badLines[7].padEnd(132, " ").split("");
+  put(chars, 110, 112, "0", "right");
+  badLines[7] = chars.join("").trimEnd();
+  const r = validateSdef(badLines.join("\r\n"));
+  assert.ok(r.diagnostics.some((d) => d.code === "ZERO_FLOAT_SIGN" && d.severity === "error"));
+});
+
+test("requires workers per day, using zero when no workers are planned", () => {
+  const badLines = [...lines];
+  const chars = badLines[3].padEnd(132, " ").split("");
+  put(chars, 67, 69, "   ");
+  badLines[3] = chars.join("").trimEnd();
+  const r = validateSdef(badLines.join("\r\n"));
+  assert.ok(r.diagnostics.some((d) => d.code === "WORKERS_PER_DAY_REQUIRED" && d.severity === "error"));
+});

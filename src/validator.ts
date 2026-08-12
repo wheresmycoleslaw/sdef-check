@@ -207,6 +207,9 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
     if (calendarCodes.has(code)) diagnostic(diagnostics, "error", "DUPLICATE_CALENDAR", `Calendar code ${JSON.stringify(code)} is defined more than once.`, rec);
     calendarCodes.add(code);
   }
+  if (p6Interop && calendarCodes.size > 36) {
+    diagnostic(diagnostics, "error", "P6_CALENDAR_LIMIT", `P6 SDEF workflows support at most 36 calendars; found ${calendarCodes.size}.`);
+  }
   for (const rec of recordsOf(byKind, "HOLI")) {
     const code = rec.fields.calendarCode ?? "";
     if (!calendarCodes.has(code)) diagnostic(diagnostics, "error", "UNKNOWN_HOLIDAY_CALENDAR", `HOLI references undefined calendar ${JSON.stringify(code)}.`, rec);
@@ -222,6 +225,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
     if (!calendarCodes.has(rec.fields.calendarCode ?? "")) diagnostic(diagnostics, "error", "UNKNOWN_ACTIVITY_CALENDAR", `Activity ${JSON.stringify(id)} references undefined calendar ${JSON.stringify(rec.fields.calendarCode)}.`, rec);
     const duration = numberValue(rec.fields.duration ?? "");
     if (duration !== null && (duration < 0 || duration > 999)) diagnostic(diagnostics, "error", "DURATION_RANGE", `Activity duration ${duration} is outside the SDEF 0–999 day range.`, rec);
+    if (!(rec.fields.workersPerDay ?? "")) diagnostic(diagnostics, "error", "WORKERS_PER_DAY_REQUIRED", `Activity ${JSON.stringify(id)} must specify Workers Per Day; use 0 when there is no worker requirement.`, rec);
     const constraintDate = rec.fields.constraintDate ?? "";
     const constraintType = rec.fields.constraintType ?? "";
     if (Boolean(constraintDate) !== Boolean(constraintType)) diagnostic(diagnostics, "error", "CONSTRAINT_PAIR", "Constraint Date and Constraint Type must either both be present or both be blank.", rec);
@@ -244,7 +248,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
     if (lag !== null && lag < 0) diagnostic(diagnostics, "warning", "NEGATIVE_LAG", "Negative lag is not broadly interoperable under SDEF and is discouraged by Appendix A.", rec);
   }
   if (proj?.fields.precedence === "P" && activities.length > 1 && recordsOf(byKind, "PRED").length === 0) {
-    diagnostic(diagnostics, "warning", "NO_PRECEDENCE_RECORDS", "Project uses precedence diagramming but contains no PRED records.", proj);
+    diagnostic(diagnostics, "error", "NO_PRECEDENCE_RECORDS", "Project uses precedence diagramming, so at least one PRED record is required when multiple activities are present.", proj);
   }
 
   const unitIds = new Set<string>();
@@ -281,7 +285,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
       if (rec.fields.earlyStart || rec.fields.lateStart) diagnostic(diagnostics, "error", "STARTED_DATE_FIELDS", `Started activity ${JSON.stringify(id)} must leave Early Start and Late Start blank.`, rec);
     } else {
       if (!rec.fields.earlyStart || !rec.fields.lateStart) diagnostic(diagnostics, "error", "UNSTARTED_DATE_FIELDS", `Unstarted activity ${JSON.stringify(id)} requires Early Start and Late Start.`, rec);
-      if (remaining !== null && original !== null && remaining !== original) diagnostic(diagnostics, "warning", "UNSTARTED_REMAINING", `Unstarted activity ${JSON.stringify(id)} has Remaining Duration ${remaining}, but Original Duration is ${original}.`, rec);
+      if (remaining !== null && original !== null && remaining !== original) diagnostic(diagnostics, "error", "UNSTARTED_REMAINING", `Unstarted activity ${JSON.stringify(id)} must have Remaining Duration equal to Original Duration (${original}); found ${remaining}.`, rec);
     }
 
     if (actualFinish) {
@@ -296,9 +300,13 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
 
     const tf = numberValue(rec.fields.totalFloat ?? "");
     const sign = rec.fields.floatSign ?? "";
-    if (!actualFinish && tf !== null) {
-      if (tf === 0 && sign) diagnostic(diagnostics, "warning", "ZERO_FLOAT_SIGN", `Activity ${JSON.stringify(id)} has zero float; Appendix A says Float Sign should be blank.`, rec);
-      if (tf !== 0 && !sign) diagnostic(diagnostics, "warning", "MISSING_FLOAT_SIGN", `Activity ${JSON.stringify(id)} has nonzero total float but no Float Sign.`, rec);
+    if (!actualFinish) {
+      if (tf === null) {
+        diagnostic(diagnostics, "error", "MISSING_TOTAL_FLOAT", `Unfinished activity ${JSON.stringify(id)} must include Total Float.`, rec);
+      } else {
+        if (tf === 0 && sign) diagnostic(diagnostics, "error", "ZERO_FLOAT_SIGN", `Activity ${JSON.stringify(id)} has zero float, so Float Sign must be blank.`, rec);
+        if (tf !== 0 && !sign) diagnostic(diagnostics, "error", "MISSING_FLOAT_SIGN", `Activity ${JSON.stringify(id)} has nonzero Total Float and must include + or - in Float Sign.`, rec);
+      }
     }
   }
   for (const id of activityById.keys()) {
