@@ -2,7 +2,6 @@
   "name": "sdef-check",
   "version": "0.1.0",
   "description": "USACE SDEF fixed-width schedule parser and validator for Node.js and TypeScript",
-  "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "bin": {
@@ -37,10 +36,14 @@
     "schedule",
     "validator"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
-    "check": "npm test"
+    "check": "npm test",
+    "prepublishOnly": "npm test"
   },
   "engines": {
     "node": ">=20"
