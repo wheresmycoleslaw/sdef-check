@@ -1,0 +1,9 @@
+VOLM  1
+PROJ 12Aug26 A01  Demo Federal Project                             Example Contractor                   P 260001 01Aug26 31Dec26
+CLDR 1 NYYYYYN Five Day Week
+ACTV       1000 Mobilize                        10            1     5 GC   SITE        000001 01 C Mobilization
+ACTV       1010 Excavate                         5            1     8 EXC  SITE        000001 01 C Earthwork
+PRED       1010       1000 C    0
+PROG       1000 01Aug26           4      1000.00       600.00         0.00         18Aug26         19Aug26 +   1
+PROG       1010                   5      2500.00         0.00         0.00 19Aug26 25Aug26 20Aug26 26Aug26 +   1
+END

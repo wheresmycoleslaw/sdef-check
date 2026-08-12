@@ -1,0 +1,32 @@
+{
+  "name": "sdef-check",
+  "version": "0.1.0",
+  "description": "USACE SDEF fixed-width schedule parser and validator for Node.js and TypeScript",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "sdef-check": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "check": "npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  }
+}
