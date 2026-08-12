@@ -6,7 +6,7 @@ SDEF Check is a small TypeScript parser, validator, and CLI for the U.S. Army Co
 
 The goal is simple: **catch SDEF problems before QCS/RMS does.**
 
-> **Status:** early prototype. The validator is based on ER 1-1-11 Appendix A plus narrowly scoped Primavera/QCS interoperability rules. It is not an official USACE product and still needs validation against a larger corpus of real-world exports.
+> **Status:** early release. The validator is based on ER 1-1-11 Appendix A plus narrowly scoped Primavera/QCS interoperability rules. It has also been cross-checked structurally against MPXJ's current SDEF reader. It is not an official USACE product.
 
 ## What it checks
 
@@ -18,8 +18,11 @@ The goal is simple: **catch SDEF problems before QCS/RMS does.**
 - Calendar and activity references
 - Duplicate activities, calendars, relationships, unit records, and progress records
 - Progress-state rules for actual/early/late dates, remaining duration, and float
+- Required precedence records for precedence-diagramming schedules
+- Workers-per-day requirements, including `0` when no workers are planned
 - The four-character QCS project-ID interoperability failure
-- The practical 10,000-activity Primavera SDEF conversion ceiling
+- Primavera interoperability checks, including the 36-calendar and 10,000-activity ceilings
+- P6 Feature of Work length warnings without pretending the conflicting SDEF/P6 documentation is more precise than it is
 
 ## CLI
 
@@ -79,20 +82,28 @@ npm install
 npm test
 ```
 
-`npm test` compiles the TypeScript and runs the fixture tests with Node's built-in test runner.
+`npm test` compiles the TypeScript and runs the fixture/regression tests with Node's built-in test runner.
 
 ## Why this project is deliberately small
 
 SDEF Check is not trying to replace Primavera P6, QCS, RMS, or a scheduling platform. It is a preflight layer: one file in, exact diagnostics out.
 
-That makes it suitable for a CLI today and, later, a desktop UI, CI check, or embedded validator without changing the core engine.
+That makes it suitable for a CLI, desktop UI, CI check, or embedded validator without changing the core engine.
 
 ## Licensing
 
-No open-source license has been selected yet. Until a license is added, normal copyright restrictions apply even if the repository is publicly visible. See [`LICENSE-STRATEGY.md`](./LICENSE-STRATEGY.md) for the current dual-licensing considerations before public release.
+SDEF Check is open source under **AGPL-3.0-or-later**. See [`LICENSE`](./LICENSE).
+
+Organizations that want to embed, modify, or distribute SDEF Check under proprietary terms can obtain a separate **commercial license from Sithix LLC**. See [`LICENSE-STRATEGY.md`](./LICENSE-STRATEGY.md).
 
 ## Sources and scope
 
-The implementation is based primarily on **U.S. Army Corps of Engineers ER 1-1-11, Appendix A (SDEF)**. Some interoperability diagnostics are intentionally treated as implementation-specific checks rather than core format requirements.
+The implementation is based primarily on **U.S. Army Corps of Engineers ER 1-1-11, Appendix A (SDEF)**. Primavera/QCS interoperability diagnostics are kept separate where implementation guidance differs from the core format.
 
-Real-world QCS/RMS fixture testing is the next major validation step before this should be treated as authoritative.
+One known documentation ambiguity is Feature of Work: Appendix A's fixed columns, current Oracle conversion guidance, current RMS/P6 guidance, and mature third-party SDEF readers do not all agree on the same effective length. SDEF Check preserves the fixed-column field and reports P6-specific length concerns as interoperability warnings instead of silently truncating data.
+
+A larger corpus of genuine contractor/QCS/RMS exports is still desirable. Public SDEF fixtures are unusually scarce, so issues with reproducible sample files are especially valuable.
+
+---
+
+Built by **Sithix LLC**.

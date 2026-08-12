@@ -1,7 +1,12 @@
-# Licensing strategy (not a license)
+# Licensing strategy
 
-The repository is currently private/unlicensed while the implementation is validated.
+SDEF Check is released under **AGPL-3.0-or-later** for open-source use.
 
-For an open-source + commercial model, consider **AGPL-3.0-or-later + a paid commercial license**. The commercial license can remove copyleft obligations for vendors embedding `sdef-check` into proprietary scheduling, project-controls, or document-management products.
+The project is intended to support a dual-licensing model:
 
-Do not copy source from existing SDEF implementations unless their license is deliberately accepted. This prototype was written against the public USACE specification and public interoperability documentation.
+- **Open-source license:** AGPL-3.0-or-later.
+- **Commercial license:** available separately for organizations that want to embed, modify, or distribute SDEF Check under proprietary terms without AGPL copyleft obligations.
+
+Commercial licensing is handled by **Sithix LLC**.
+
+The implementation is written against the public USACE SDEF specification and public interoperability documentation. Existing SDEF implementations may be used for behavioral comparison, but their source is not copied into this project.

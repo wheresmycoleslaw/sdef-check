@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "USACE SDEF fixed-width schedule parser and validator for Node.js and TypeScript",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "bin": {
     "sdef-check": "dist/cli.js"
@@ -15,7 +16,26 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wheresmycoleslaw/sdef-check.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wheresmycoleslaw/sdef-check/issues"
+  },
+  "homepage": "https://github.com/wheresmycoleslaw/sdef-check#readme",
+  "keywords": [
+    "sdef",
+    "usace",
+    "qcs",
+    "rms",
+    "primavera",
+    "p6",
+    "schedule",
+    "validator"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
