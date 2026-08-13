@@ -1,0 +1,65 @@
+name: MPXJ modern SDEF interop probe
+
+on:
+  push:
+    branches:
+      - agent/mpxj-modern
+    paths:
+      - .github/workflows/mpxj-modern.yml
+      - tools/interop/**
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build SDEF Check
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Download pinned modern XER
+        run: >-
+          curl --fail --location
+          'https://raw.githubusercontent.com/schedulevisualiser/schedule-visualiser/9dae2f1d9032fef637b66d92cbe790bfc899afa5/sample/Sample_Project.xer'
+          --output /tmp/source.xer
+
+      - name: Convert XER to SDEF with MPXJ 16.7.0
+        run: >-
+          mvn --batch-mode --errors --file tools/interop/pom.xml
+          compile exec:java
+          -Dexec.args='/tmp/source.xer /tmp/generated.sdef 1000'
+
+      - name: Validate generated SDEF
+        run: |
+          set +e
+          node dist/cli.js /tmp/generated.sdef --json > /tmp/sdef-check-result.json
+          status=$?
+          set -e
+          cat /tmp/sdef-check-result.json
+          echo "sdef_check_exit=$status" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload probe artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpxj-modern-sdef-interop
+          path: |
+            /tmp/generated.sdef
+            /tmp/sdef-check-result.json
+          retention-days: 7
