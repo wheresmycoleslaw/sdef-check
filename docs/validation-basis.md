@@ -1,48 +1,40 @@
 # Validation basis
 
-SDEF Check separates **core SDEF format rules** from **Primavera P6 / QCS interoperability rules**. The distinction matters because some current workflow constraints are not obvious from the fixed-width record layouts alone.
+SDEF Check separates **ER 1-1-11 Appendix A rules** from **Primavera P6 / QCS interoperability rules**. The distinction is intentional because the current P6 conversion guidance and Appendix A are not identical in every edge case.
 
 ## Primary USACE sources
 
-- **ER 1-1-11, Project Schedules, Appendix A** — core SDEF record layout, ordering, field widths, types, and required records.
-  - https://www.publications.usace.army.mil/USACE-Publications/Engineer-Regulations/
-- **RMS/QCS: “How do I resolve the 'not a valid integer' error when performing an SDEF import?”** — documents the requirement that the Primavera Project ID used for SDEF be exactly four characters because shorter values can shift fixed-width fields and cause QCS integer errors.
+- **ER 1-1-11, Project Schedules, Appendix A** — authoritative core SDEF record layout, ordering, field widths, justification, date abbreviations, progress-state rules, and float rules.
+  - https://www.publications.usace.army.mil/Portals/76/Publications/EngineerRegulations/ER_1-1-11.pdf
+- **RMS/QCS: “How do I resolve the 'not a valid integer' error when performing an SDEF import?”** — documents the Primavera/QCS requirement for an exactly four-character Project ID because shorter values can shift fixed-width fields.
   - https://rms.usace.army.mil/datafiles/helpvideos/qcsabout/Advanced/Content/Topics/FAQ_QCS_2/How%20do%20I%20resolve%20the%20%27not%20a%20valid%20integer%27%20error%20when%20performing%20an%20SDEF%20import.htm
-- **RMS/QCS: “How do I setup the Activity Code Structure in Primavera?”** — documents current P6/SDEF interoperability behavior including:
-  - WRKP 3, RESP 4, AREA 4, MODF 6, BIDI 6, PHAS 2, CATW 1, FOW 20
-  - activity descriptions exported to 30 characters
-  - activity IDs limited to 10 characters, with duplicate-ID risk after truncation
-  - maximum 10,000 activities
-  - calendar codes limited to one character and 36 calendars (`A-Z`, `0-9`)
-  - durations above 999 days converting to zero
-  - P6 milestones converting to zero-duration SDEF activities
+- **RMS/QCS: “How do I setup the Activity Code Structure in Primavera?”** — documents P6/SDEF interoperability behavior including WRKP, 20-character FOW values, 10-character activity IDs, the 10,000-activity ceiling, 36 one-character calendars (`A-Z`, `0-9`), the 999-day duration limit, and conversion of milestones to zero-duration activities.
   - https://rms.usace.army.mil/datafiles/helpvideos/qcsabout/Advanced/Content/Topics/FAQ_QCS_2/How%20do%20I%20setup%20the%20%20Activity%20Code%20Structure%20in%20Primavera.htm
-- **RMS/QCS: “How do I fix crashes when importing from Primavera (Regional Settings)?”** — documents non-English Windows regional settings as a cause of SDEF import crashes and recommends English (United States) formatting.
-  - https://rms.usace.army.mil/datafiles/helpvideos/qcsabout/Advanced/Content/Topics/FAQ_QCS_2/How%20do%20I%20fix%20crashes%20when%20importing%20from%20Primavera%20%28Regional%20Settings%29.htm
 
-## Independent structural cross-check
+## Core mode versus P6/QCS mode
 
-The record layouts and parser behavior have also been compared against the current MPXJ SDEF implementation. MPXJ is not treated as the authority over USACE documentation; it is used as a mature independent implementation for detecting obvious interpretation mistakes.
+`validateSdef()` enables P6/QCS interoperability checks by default. Set `p6Interop: false`, or use CLI `--no-p6-interop`, to apply only core Appendix A behavior where the two differ.
 
-Current cross-check release at the time of this document: **MPXJ 16.7.0** (2026-08-08).
+Three differences are explicitly modeled:
 
-- https://github.com/joniles/mpxj/tree/master/src/main/java/org/mpxj/sdef
+1. **Project Identifier** — Appendix A describes a maximum four-character identifier. RMS/QCS guidance requires exactly four characters for Primavera interoperability. Exact-four is therefore enforced only in P6/QCS mode.
+2. **Workers Per Day** — Appendix A says the value is used when required by project scheduling specifications and says activities without workers use `0`. Current P6/QCS coding guidance uses WRKP. SDEF Check requires it in P6/QCS mode but does not invent a universal core requirement.
+3. **Zero-duration milestones** — P6 guidance says milestones convert to zero-duration SDEF activities, while Appendix A also states that Remaining Duration `0` requires an Actual Finish. SDEF Check permits the unstarted zero-duration milestone edge case in P6/QCS mode and enforces the literal Appendix A rule in core-only mode.
+
+## MPXJ cross-check
+
+MPXJ is used only as an independent implementation cross-check; USACE documentation remains authoritative. The current comparison uses **MPXJ 16.7.0**.
+
+A GitHub Actions probe converted a pinned public modern Primavera XER through MPXJ and then ran the generated SDEF through SDEF Check. MPXJ successfully read the `Pump Station Upgrade` sample (32 tasks, one calendar) and produced a 79-record SDEF with 24 ACTV, 27 PRED, and 24 PROG records.
+
+The probe confirmed several SDEF Check diagnostics rather than invalidating them. MPXJ's generated file differed from Appendix A by emitting uppercase month codes such as `03AUG26`, a two-character calendar value, left-justified activity/predecessor IDs, and `+` signs on some zero-float activities. Appendix A explicitly defines title-case month abbreviations, one-character calendar codes separated by blank columns, right-justified numeric ID fields, and a blank Float Sign when float is zero.
+
+A separate older public XER from the `pschimmel/NAS` corpus could not reach SDEF conversion because MPXJ 16.7.0 threw a `ClassCastException` while reading the project-level `def_cost_per_qty` field. That is an MPXJ/XER compatibility finding, not an SDEF Check failure.
 
 ## Real-world-derived fixture
 
-`test/fixtures/real-world-derived.sdef` is a **sanitized derivative**, not a contractor-submitted SDEF and not evidence of QCS acceptance.
-
-It was built from activity, duration, date, milestone, and relationship patterns in a public Primavera XER example contained in the MIT-licensed `pschimmel/NAS` repository. Project identity, contractor identity, contract number, costs, and other project-specific metadata were removed or replaced. The fixture exists to exercise realistic P6 schedule shapes, especially zero-duration milestones and closeout logic.
-
-Source XER:
-
-- `Files/Examples/Initial Schedule Bldgs 8108 and 8228 Smith Barracks Baumholder.xer`
-- https://github.com/pschimmel/NAS
-
-The source XER exposed an important validator false positive: current USACE guidance says P6 milestones are converted to zero-duration SDEF activities, so an unstarted zero-duration activity can legitimately have Remaining Duration `0` without an Actual Finish. That case is now covered by regression tests.
+`test/fixtures/real-world-derived.sdef` is a **sanitized derivative**, not a contractor-submitted SDEF and not evidence of QCS acceptance. It was built from activity, duration, date, milestone, and relationship patterns in a public Primavera XER example in the MIT-licensed `pschimmel/NAS` repository. Project identity, contractor identity, contract number, costs, and other project-specific metadata were replaced or removed.
 
 ## Remaining evidence gap
 
-SDEF Check still needs at least one **genuine SDEF file known to have successfully imported into QCS/RMS** and, ideally, several genuine failed imports with their exact QCS/RMS error messages. Until those are available, the project should not claim certification, official validation, or perfect QCS behavioral equivalence.
-
-Public contributions of sanitized fixtures are tracked in GitHub issues. Files should only be contributed when the submitter has the right to share them.
+SDEF Check still needs at least one **genuine SDEF known to have successfully imported into QCS/RMS**, and ideally several genuine failed imports with their exact QCS/RMS errors. Until then, the project should not claim certification, official validation, or perfect QCS behavioral equivalence.
