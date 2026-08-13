@@ -42,7 +42,7 @@ jobs:
 
       - name: Convert project 4829 from XER to SDEF with MPXJ 16.7.0
         run: >-
-          mvn --batch-mode --quiet --file tools/interop/pom.xml
+          mvn --batch-mode --errors --file tools/interop/pom.xml
           compile exec:java
           -Dexec.args='/tmp/source.xer /tmp/generated.sdef'
 
