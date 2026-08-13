@@ -1,0 +1,21 @@
+VOLM  1
+PROJ 01Mar19 A001 Sanitized Real-World-Derived Project             Sanitized Contractor                 P TEST01 18Sep18 18Jan21
+CLDR 1 NYYYYYN Five Day Workweek
+ACTV     CO2110 Commissioning + Testing         12            1     0 GEN  SITE        000001 01 C Closeout
+ACTV     CO2130 Contractor Pre-Final             0            1     0 GEN  SITE        000001 01 C Closeout
+ACTV     CO2140 Punch List Corrections           5            1     0 GEN  SITE        000001 01 C Closeout
+ACTV     CO2150 Government Pre-Final             0            1     0 GEN  SITE        000001 01 C Closeout
+ACTV     CO2170 Final Punch Corrections         10            1     0 GEN  SITE        000001 01 C Closeout
+ACTV     CO2180 Final Inspection                 0            1     0 GEN  SITE        000001 01 C Closeout
+PRED     CO2130     CO2110 C    0
+PRED     CO2140     CO2130 C    0
+PRED     CO2150     CO2140 C    0
+PRED     CO2170     CO2150 C    0
+PRED     CO2180     CO2170 C    0
+PROG     CO2110                  12         0.00         0.00         0.00 10Sep20 25Sep20 02Sep20 18Sep20 -   5
+PROG     CO2130                   0         0.00         0.00         0.00 25Sep20 25Sep20 18Sep20 18Sep20 -   5
+PROG     CO2140                   5         0.00         0.00         0.00 28Sep20 02Oct20 21Sep20 25Sep20 -   5
+PROG     CO2150                   0         0.00         0.00         0.00 05Oct20 05Oct20 28Sep20 28Sep20 -   5
+PROG     CO2170                  10         0.00         0.00         0.00 05Oct20 19Oct20 28Sep20 09Oct20 -   5
+PROG     CO2180                   0         0.00         0.00         0.00 19Oct20 19Oct20 09Oct20 09Oct20 -   5
+END
