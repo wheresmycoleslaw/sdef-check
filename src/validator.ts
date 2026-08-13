@@ -181,7 +181,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
   const proj = recordsOf(byKind, "PROJ")[0];
   if (proj) {
     const id = proj.fields.projectIdentifier ?? "";
-    if (id.length !== 4) {
+    if (p6Interop && id.length !== 4) {
       diagnostic(
         diagnostics,
         "error",
@@ -234,7 +234,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
     if (!calendarCodes.has(rec.fields.calendarCode ?? "")) diagnostic(diagnostics, "error", "UNKNOWN_ACTIVITY_CALENDAR", `Activity ${JSON.stringify(id)} references undefined calendar ${JSON.stringify(rec.fields.calendarCode)}.`, rec);
     const duration = numberValue(rec.fields.duration ?? "");
     if (duration !== null && (duration < 0 || duration > 999)) diagnostic(diagnostics, "error", "DURATION_RANGE", `Activity duration ${duration} is outside the SDEF 0–999 day range.`, rec);
-    if (!(rec.fields.workersPerDay ?? "")) diagnostic(diagnostics, "error", "WORKERS_PER_DAY_REQUIRED", `Activity ${JSON.stringify(id)} must specify Workers Per Day; use 0 when there is no worker requirement.`, rec);
+    if (p6Interop && !(rec.fields.workersPerDay ?? "")) diagnostic(diagnostics, "error", "WORKERS_PER_DAY_REQUIRED", `Activity ${JSON.stringify(id)} must specify Workers Per Day for the P6/QCS activity-code workflow; use 0 when there is no worker requirement.`, rec);
     const constraintDate = rec.fields.constraintDate ?? "";
     const constraintType = rec.fields.constraintType ?? "";
     if (Boolean(constraintDate) !== Boolean(constraintType)) diagnostic(diagnostics, "error", "CONSTRAINT_PAIR", "Constraint Date and Constraint Type must either both be present or both be blank.", rec);
@@ -304,7 +304,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
       if (remaining !== null && remaining !== 0) diagnostic(diagnostics, "error", "FINISHED_REMAINING", `Finished activity ${JSON.stringify(id)} must have Remaining Duration 0.`, rec);
     } else {
       if (!rec.fields.earlyFinish || !rec.fields.lateFinish) diagnostic(diagnostics, "error", "UNFINISHED_FINISH_FIELDS", `Unfinished activity ${JSON.stringify(id)} requires Early Finish and Late Finish.`, rec);
-      if (remaining === 0 && original !== null && original > 0) diagnostic(diagnostics, "error", "ZERO_REMAINING_WITHOUT_FINISH", `Activity ${JSON.stringify(id)} has Remaining Duration 0 but no Actual Finish.`, rec);
+      if (remaining === 0 && !(p6Interop && original === 0)) diagnostic(diagnostics, "error", "ZERO_REMAINING_WITHOUT_FINISH", `Activity ${JSON.stringify(id)} has Remaining Duration 0 but no Actual Finish.`, rec);
     }
 
     const tf = numberValue(rec.fields.totalFloat ?? "");
