@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   publish:
+    if: github.event_name != 'push' || startsWith(github.event.head_commit.message, 'Release sdef-check ')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
