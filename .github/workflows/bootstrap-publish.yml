@@ -2,6 +2,11 @@ name: Bootstrap npm publish
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/bootstrap-publish.yml"
 
 permissions:
   contents: read
