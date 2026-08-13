@@ -1,0 +1,68 @@
+name: MPXJ real-world interop probe
+
+on:
+  push:
+    branches:
+      - agent/mpxj-interop
+    paths:
+      - .github/workflows/mpxj-interop.yml
+      - tools/interop/**
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install and build SDEF Check
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Download pinned public Primavera XER fixture
+        run: >-
+          curl --fail --location
+          'https://raw.githubusercontent.com/pschimmel/NAS/3bbc40b1aa3762b43fb6c641e010e1622e89688d/Files/Examples/Initial%20Schedule%20Bldgs%208108%20and%208228%20Smith%20Barracks%20Baumholder.xer'
+          --output /tmp/source.xer
+
+      - name: Convert project 4829 from XER to SDEF with MPXJ 16.7.0
+        run: >-
+          mvn --batch-mode --quiet --file tools/interop/pom.xml
+          compile exec:java
+          -Dexec.args='/tmp/source.xer /tmp/generated.sdef'
+
+      - name: Validate generated SDEF
+        run: |
+          set +e
+          node dist/cli.js /tmp/generated.sdef --json > /tmp/sdef-check-result.json
+          status=$?
+          set -e
+          cat /tmp/sdef-check-result.json
+          echo "sdef_check_exit=$status" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/sdef-check-result.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload probe artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpxj-sdef-interop
+          path: |
+            /tmp/generated.sdef
+            /tmp/sdef-check-result.json
+          retention-days: 7
