@@ -205,6 +205,15 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
   for (const rec of calendars) {
     const code = rec.fields.calendarCode ?? "";
     if (calendarCodes.has(code)) diagnostic(diagnostics, "error", "DUPLICATE_CALENDAR", `Calendar code ${JSON.stringify(code)} is defined more than once.`, rec);
+    if (p6Interop && code && !/^[A-Z0-9]$/.test(code)) {
+      diagnostic(
+        diagnostics,
+        "error",
+        "P6_CALENDAR_CODE",
+        `P6 SDEF calendar code ${JSON.stringify(code)} is invalid; use one uppercase letter A-Z or digit 0-9.`,
+        rec,
+      );
+    }
     calendarCodes.add(code);
   }
   if (p6Interop && calendarCodes.size > 36) {
@@ -295,7 +304,7 @@ export function validateSdef(input: string, options: ValidationOptions = {}): Va
       if (remaining !== null && remaining !== 0) diagnostic(diagnostics, "error", "FINISHED_REMAINING", `Finished activity ${JSON.stringify(id)} must have Remaining Duration 0.`, rec);
     } else {
       if (!rec.fields.earlyFinish || !rec.fields.lateFinish) diagnostic(diagnostics, "error", "UNFINISHED_FINISH_FIELDS", `Unfinished activity ${JSON.stringify(id)} requires Early Finish and Late Finish.`, rec);
-      if (remaining === 0) diagnostic(diagnostics, "error", "ZERO_REMAINING_WITHOUT_FINISH", `Activity ${JSON.stringify(id)} has Remaining Duration 0 but no Actual Finish.`, rec);
+      if (remaining === 0 && original !== null && original > 0) diagnostic(diagnostics, "error", "ZERO_REMAINING_WITHOUT_FINISH", `Activity ${JSON.stringify(id)} has Remaining Duration 0 but no Actual Finish.`, rec);
     }
 
     const tf = numberValue(rec.fields.totalFloat ?? "");
