@@ -2,9 +2,16 @@
 
 **USACE SDEF checker and validator for QCS/RMS schedule files.**
 
-SDEF Check is a small TypeScript parser, validator, and CLI for the U.S. Army Corps of Engineers **Standard Data Exchange Format (SDEF)** used to exchange construction schedules with QCS/RMS.
+SDEF Check is a TypeScript parser, validator, library, and CLI for the U.S. Army Corps of Engineers **Standard Data Exchange Format (SDEF)** used to exchange construction schedules with QCS/RMS.
 
 The goal is simple: **catch SDEF problems before QCS/RMS does.**
+
+## At a glance
+
+- **Problem:** SDEF is a rigid fixed-width interchange format where small formatting errors can break downstream QCS/RMS imports or create difficult-to-diagnose interoperability failures.
+- **Built:** A deterministic parser and validator that separates core SDEF rules from Primavera/QCS interoperability checks and returns actionable diagnostics.
+- **Engineering:** Fixed-position parsing, cross-record validation, date/numeric rules, duplicate/reference checks, regression fixtures, CLI + library APIs, and explicit handling of ambiguous source documentation.
+- **Delivery:** Versioned releases with automated testing and CI, designed to work as a standalone CLI, embedded library, desktop preflight layer, or CI check.
 
 > **Status:** early release. The validator is based on ER 1-1-11 Appendix A plus narrowly scoped Primavera/QCS interoperability rules. It has also been cross-checked structurally against MPXJ's current SDEF reader. It is not an official USACE product.
 
@@ -103,6 +110,10 @@ The implementation is based primarily on **U.S. Army Corps of Engineers ER 1-1-1
 One known documentation ambiguity is Feature of Work: Appendix A's fixed columns, current Oracle conversion guidance, current RMS/P6 guidance, and mature third-party SDEF readers do not all agree on the same effective length. SDEF Check preserves the fixed-column field and reports P6-specific length concerns as interoperability warnings instead of silently truncating data.
 
 A larger corpus of genuine contractor/QCS/RMS exports is still desirable. Public SDEF fixtures are unusually scarce, so issues with reproducible sample files are especially valuable.
+
+## Related work
+
+- [Capability](https://github.com/wheresmycoleslaw/capability) — an open-source TypeScript runtime and protocol for giving AI agents a governed ability layer across prepared integrations and software-world fallbacks.
 
 ---
 
